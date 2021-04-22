@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>基于双目立体视觉的人脸特征点三维坐标测量</title>
+    <url>/2021/04/22/binocular-face1/</url>
+    <content><![CDATA[<p>开始</p>
+<span id="more"></span>
+
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/formula1.png" alt="公式1"></p>
+]]></content>
+      <categories>
+        <category>计算机视觉</category>
+      </categories>
+      <tags>
+        <tag>计算机视觉</tag>
+        <tag>双目视觉</tag>
+        <tag>人脸识别</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello World</title>
     <url>/2021/04/20/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
