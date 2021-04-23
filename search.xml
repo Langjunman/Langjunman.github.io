@@ -3,13 +3,33 @@
   <entry>
     <title>基于双目立体视觉的人脸特征点三维坐标测量</title>
     <url>/2021/04/22/binocular-face1/</url>
-    <content><![CDATA[<p>开始</p>
+    <content><![CDATA[<p>使用双目相机拍摄人脸图像，然后用OpenCV自带的人脸识别工具识别出人脸的特征点，利用双目视觉成像原理确定特征点在物理空间的三维坐标，精度能达到亚毫米级。</p>
 <span id="more"></span>
 
+<h1 id="双目视觉成像原理"><a href="#双目视觉成像原理" class="headerlink" title="双目视觉成像原理"></a>双目视觉成像原理</h1><h2 id="单个相机成像"><a href="#单个相机成像" class="headerlink" title="单个相机成像"></a>单个相机成像</h2><p>这个部分网上资料很多，在此仅作简单介绍。</p>
+<p>为了描述物理世界的一个点到相机图像中的转换关系，需要建立下图所示的四个坐标系：世界坐标系(Ow-XwYwZw)、相机坐标系(Oc-XcYcZc)、图像坐标系(o-xy)、像素坐标系(uv)。</p>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/coordinate1.png" alt="坐标系示意图"></p>
+<p>图中物理世界的点P最终要显示在相机图片中，用像素坐标系表示，因此需要建立世界坐标系到像素坐标系的转换关系。如下图公式所示。我们的目的是输入u、v，输出X<sub>w<sub>，Y<sub>w<sub>，Z<sub>w<sub>，因此解决其他未知参数即可解方程。公式中包含相机的内参和外参，其中内参有焦距（fx、fy），主点坐标（x0、y0），坐标轴倾斜参数s（理想情况下为0），外参即旋转矩阵R<sub>3x3<sub>，t<sub>3x1<sub>。</sub></sub></sub></sub></sub></sub></sub></sub></sub></sub></p>
 <p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/formula1.png" alt="公式1"></p>
+<p>相机的内参和外参可以通过相机标定来解决。常见的标定方法有OpenCV自带的标定函数和Matlab标定工具两种，根据个人经验，Matlab标定方便卫生起效快，很容易获得误差极小的标定结果，具体操作网上也很容易搜到，不再赘述。</p>
+<h2 id="双目相机坐标计算"><a href="#双目相机坐标计算" class="headerlink" title="双目相机坐标计算"></a>双目相机坐标计算</h2><p>通过双目视觉计算三维坐标主要有两种方法，一种是光轴会聚模型（又叫三角测量，&lt;&lt;***Multiple View Geometry in Computer Vision***&gt;&gt;中有详细介绍），依赖于上文提到的转换关系，另一种是光轴平行模型。根据个人的应用场景，光轴平行模型精度略差，再加上这种方法大部分应用于立体匹配，因此本文不多叙述。</p>
+<p>在光轴会聚模型中，物理世界的点P到两个相机分别都具有上述转换关系，每个相机对应一个方程，联立两个方程，用最小二乘法即可求得三维坐标。OpenCV中集成了这个方法：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">cv::<span class="built_in">triangulatePoints</span>(T1, T2, pts_1, pts_2, pts_4d);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>T1，T2是两个相机标定后的外参（平移矩阵R和旋转矩阵T）拼接而成的两个3x4矩阵，长下面这样：</li>
+</ul>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/extrinsic1.jpg" alt="T1和T2"></p>
+<p><strong>注意T1应该是个3x4的零矩阵，因为相机1的外参代表从相机1转换到相机1自身，不需要平移和旋转。</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">cv::Mat T1 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">3</span>, <span class="number">4</span>) &lt;&lt;   <span class="comment">//这是我项目里的实际参数</span></span><br><span class="line">	<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>,</span><br><span class="line">	<span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>,</span><br><span class="line">	<span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>);</span><br><span class="line">cv::Mat T2 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">3</span>, <span class="number">4</span>) &lt;&lt;</span><br><span class="line">	<span class="number">0.999977229479619</span>, <span class="number">-0.00532193046070156</span>, <span class="number">0.00414940699831593</span>, <span class="number">-119.261032810442</span>,</span><br><span class="line">	<span class="number">0.00532910465608532</span>, <span class="number">0.999984321284919</span>, <span class="number">-0.00171983368511187</span>, <span class="number">-0.197778050925297</span>,</span><br><span class="line">	<span class="number">-0.00414018910566970</span>, <span class="number">0.00174190714775862</span>, <span class="number">0.999989912245948</span>, <span class="number">-2.50548372131854</span></span><br><span class="line">	);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>pts_1，pts_2是输入的两幅图像中点P的像素坐标，pts_4d是输出的齐次坐标，简单处理一下就能变成3维坐标（前三项分别除以第四项，变成Xw，Yw，Zw）。把输入和输出的点扩展成多个点也能照常使用。</li>
+</ul>
+<h1 id="人脸特征点检测"><a href="#人脸特征点检测" class="headerlink" title="人脸特征点检测"></a>人脸特征点检测</h1><p>人脸特征点（facial landmarks），也可以叫人脸关键点，</p>
 ]]></content>
       <categories>
-        <category>计算机视觉</category>
+        <category>计算机</category>
       </categories>
       <tags>
         <tag>计算机视觉</tag>
