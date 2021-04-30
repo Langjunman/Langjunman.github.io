@@ -88,9 +88,13 @@
 <meta property="og:locale">
 <meta property="og:image" content="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/coordinate1.png">
 <meta property="og:image" content="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/formula1.png">
+<meta property="og:image" content="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/triangulation.jpg">
 <meta property="og:image" content="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/extrinsic1.jpg">
+<meta property="og:image" content="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/facial_landmarks.png">
+<meta property="og:image" content="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/face1.png">
+<meta property="og:image" content="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/xyz1.png">
 <meta property="article:published_time" content="2021-04-22T14:03:45.000Z">
-<meta property="article:modified_time" content="2021-04-23T12:05:25.722Z">
+<meta property="article:modified_time" content="2021-04-30T09:01:41.535Z">
 <meta property="article:author" content="Langjx">
 <meta property="article:tag" content="计算机视觉">
 <meta property="article:tag" content="双目视觉">
@@ -226,16 +230,6 @@
           </a>
         </li>
       
-        
-        <li class="menu-item menu-item-about">
-          <a href="/about/" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
-            
-            关于
-          </a>
-        </li>
-      
 
       
         <li class="menu-item menu-item-search">
@@ -355,8 +349,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA/" itemprop="url" rel="index">
-                    <span itemprop="name">计算机</span>
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89/" itemprop="url" rel="index">
+                    <span itemprop="name">计算机视觉</span>
                   </a>
                 </span>
 
@@ -391,7 +385,7 @@
                   <span class="post-meta-item-text">字数统计&#58;</span>
                 
                 <span title="字数统计">
-                  850字
+                  2.4k字
                 </span>
               
 
@@ -407,7 +401,7 @@
                   <span class="post-meta-item-text">阅读时长 &asymp;</span>
                 
                 <span title="阅读时长">
-                  3分钟
+                  10分钟
                 </span>
               
             </div>
@@ -434,24 +428,55 @@
 <h1 id="双目视觉成像原理"><a href="#双目视觉成像原理" class="headerlink" title="双目视觉成像原理"></a>双目视觉成像原理</h1><h2 id="单个相机成像"><a href="#单个相机成像" class="headerlink" title="单个相机成像"></a>单个相机成像</h2><p>这个部分网上资料很多，在此仅作简单介绍。</p>
 <p>为了描述物理世界的一个点到相机图像中的转换关系，需要建立下图所示的四个坐标系：世界坐标系(Ow-XwYwZw)、相机坐标系(Oc-XcYcZc)、图像坐标系(o-xy)、像素坐标系(uv)。</p>
 <p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/coordinate1.png" alt="坐标系示意图"></p>
-<p>图中物理世界的点P最终要显示在相机图片中，用像素坐标系表示，因此需要建立世界坐标系到像素坐标系的转换关系。如下图公式所示。我们的目的是输入u、v，输出X<sub>w<sub>，Y<sub>w<sub>，Z<sub>w<sub>，因此解决其他未知参数即可解方程。公式中包含相机的内参和外参，其中内参有焦距（fx、fy），主点坐标（x0、y0），坐标轴倾斜参数s（理想情况下为0），外参即旋转矩阵R<sub>3x3<sub>，t<sub>3x1<sub>。</sub></sub></sub></sub></sub></sub></sub></sub></sub></sub></p>
+<p>图中物理世界的点P最终要显示在相机图片中，用像素坐标系表示，因此需要建立世界坐标系到像素坐标系的转换关系。如下图公式所示。我们的目的是输入u、v，输出X<sub>w</sub>、Y<sub>w</sub>、Z<sub>w</sub> ，因此解决其他未知参数即可解方程。公式中包含相机的内参和外参，其中内参有焦距（fx、fy），主点坐标（x0、y0），坐标轴倾斜参数s（理想情况下为0），外参即旋转矩阵R<sub>3x3</sub>、t<sub>3x1</sub>。</p>
 <p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/formula1.png" alt="公式1"></p>
 <p>相机的内参和外参可以通过相机标定来解决。常见的标定方法有OpenCV自带的标定函数和Matlab标定工具两种，根据个人经验，Matlab标定方便卫生起效快，很容易获得误差极小的标定结果，具体操作网上也很容易搜到，不再赘述。</p>
-<h2 id="双目相机坐标计算"><a href="#双目相机坐标计算" class="headerlink" title="双目相机坐标计算"></a>双目相机坐标计算</h2><p>通过双目视觉计算三维坐标主要有两种方法，一种是光轴会聚模型（又叫三角测量，&lt;&lt;***Multiple View Geometry in Computer Vision***&gt;&gt;中有详细介绍），依赖于上文提到的转换关系，另一种是光轴平行模型。根据个人的应用场景，光轴平行模型精度略差，再加上这种方法大部分应用于立体匹配，因此本文不多叙述。</p>
-<p>在光轴会聚模型中，物理世界的点P到两个相机分别都具有上述转换关系，每个相机对应一个方程，联立两个方程，用最小二乘法即可求得三维坐标。OpenCV中集成了这个方法：</p>
+<h2 id="双目相机坐标计算"><a href="#双目相机坐标计算" class="headerlink" title="双目相机坐标计算"></a>双目相机坐标计算</h2><p>通过双目视觉计算三维坐标主要有两种方法，一种是光轴会聚模型（又叫三角测量，《<em><strong>Multiple View Geometry in Computer Vision</strong></em>》中有详细介绍），依赖于上文提到的转换关系，另一种是光轴平行模型。根据个人的应用场景，光轴平行模型精度略差，再加上这种方法大部分应用于立体匹配，因此本文不多叙述。</p>
+<p>在光轴会聚模型中，物理世界的点P到两个相机分别都具有上述转换关系，每个相机对应一个方程，联立两个方程，用最小二乘法即可求得三维坐标。为什么要用最小二乘法，而不是求一个精确的值？那是因为像下图这样，由于一些不可消除的误差存在，例如相机畸变，图像噪声等，使得映射的两条射线不相交，也就没有交点P存在。因此只能使用最小二乘法计算出一个误差最小的点P坐标。</p>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/triangulation.jpg" alt="triangulation"></p>
+<p>OpenCV中集成了这个方法：</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cv::<span class="built_in">triangulatePoints</span>(T1, T2, pts_1, pts_2, pts_4d);</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>T1，T2是两个相机标定后的外参（平移矩阵R和旋转矩阵T）拼接而成的两个3x4矩阵，长下面这样：</li>
+<li>T1，T2是两个相机标定后的外参（平移矩阵R和旋转矩阵T）拼接而成的两个3x4矩阵，在上面的公式中也有体现，长下面这样：</li>
 </ul>
 <p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/extrinsic1.jpg" alt="T1和T2"></p>
-<p><strong>注意T1应该是个3x4的零矩阵，因为相机1的外参代表从相机1转换到相机1自身，不需要平移和旋转。</strong></p>
+<p><strong>注意：</strong></p>
+<p><strong>1.T1应该是个3x4的零矩阵，因为相机1的外参代表从相机1转换到相机1自身，不需要平移和旋转。</strong>  </p>
+<p><strong>2. 输入的参数pts_1和pts_2应该是相机坐标系下的点，如果刚开始获得的点是像素坐标系下的话（u,v）需要转换到相机坐标系</strong>。</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">cv::Mat T1 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">3</span>, <span class="number">4</span>) &lt;&lt;   <span class="comment">//这是我项目里的实际参数</span></span><br><span class="line">	<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>,</span><br><span class="line">	<span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>,</span><br><span class="line">	<span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>);</span><br><span class="line">cv::Mat T2 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">3</span>, <span class="number">4</span>) &lt;&lt;</span><br><span class="line">	<span class="number">0.999977229479619</span>, <span class="number">-0.00532193046070156</span>, <span class="number">0.00414940699831593</span>, <span class="number">-119.261032810442</span>,</span><br><span class="line">	<span class="number">0.00532910465608532</span>, <span class="number">0.999984321284919</span>, <span class="number">-0.00171983368511187</span>, <span class="number">-0.197778050925297</span>,</span><br><span class="line">	<span class="number">-0.00414018910566970</span>, <span class="number">0.00174190714775862</span>, <span class="number">0.999989912245948</span>, <span class="number">-2.50548372131854</span></span><br><span class="line">	);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <ul>
 <li>pts_1，pts_2是输入的两幅图像中点P的像素坐标，pts_4d是输出的齐次坐标，简单处理一下就能变成3维坐标（前三项分别除以第四项，变成Xw，Yw，Zw）。把输入和输出的点扩展成多个点也能照常使用。</li>
 </ul>
-<h1 id="人脸特征点检测"><a href="#人脸特征点检测" class="headerlink" title="人脸特征点检测"></a>人脸特征点检测</h1><p>人脸特征点（facial landmarks），也可以叫人脸关键点，</p>
+<h1 id="人脸特征点检测"><a href="#人脸特征点检测" class="headerlink" title="人脸特征点检测"></a>人脸特征点检测</h1><p>人脸特征点（facial landmarks），也可以叫人脸关键点，是人脸面部比较显著的一系列位置。目前常见的人脸特征点检测方法，会选择面部最为显著的68个特征点作为检测对象。在本文中，使用双目相机拍摄人脸图像，并做人脸特征点检测，左右两幅图像中均检测到对应的特征点之后，就能利用双目视觉计算人脸特征点的三维坐标，进而确定人脸的位置，应用到头动跟踪和点云配准里面。</p>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/facial_landmarks.png" alt="人脸特征点"></p>
+<p>OpenCV里面集成的人脸特征点检测方法是出自《<em><strong>Face Alignment at 3000 FPS via Regressing Local Binary Features</strong></em>》这篇论文，顾名思义速度非常快，也能同时检测出一幅图中多个人脸，缺点是错误率比较高，会把一些不是人脸的地方也检测为人脸，但也可以经过简单的修改提高表现。</p>
+<p>首先需要导入OpenCV的一些头文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;opencv2/core/core.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;opencv2/highgui/highgui.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;opencv2/imgproc/imgproc.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;opencv2/calib3d/calib3d.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;opencv2/face/facemark.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;opencv2/objdetect.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;opencv2/face/facemarkLBF.hpp&gt;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>然后加载训练好的模型和人脸特征分类器：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cv::CascadeClassifier faceDetector;</span><br><span class="line">cv::Ptr&lt;cv::face::Facemark&gt; facemark;</span><br><span class="line"><span class="keyword">this</span>-&gt;facemark-&gt;<span class="built_in">loadModel</span>(<span class="string">&quot;lbfmodel.yaml&quot;</span>);</span><br><span class="line"><span class="keyword">this</span>-&gt;faceDetector = cv::<span class="built_in">CascadeClassifier</span>(<span class="string">&quot;haarcascade_frontalface_alt2.xml&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>接下来就需要读入图像并识别图像中的人脸了，注意拍摄到的图像是有畸变的，需要利用相机的标定结果（内参矩阵和畸变参数）来消去畸变：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//相机内参矩阵</span></span><br><span class="line">cv::Mat Mml1 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">3</span>, <span class="number">3</span>) &lt;&lt;</span><br><span class="line">	<span class="number">814.331542566370</span>, <span class="number">2.54302537477624</span>, <span class="number">320.166811462154</span>,</span><br><span class="line">	<span class="number">0</span>, <span class="number">816.348689641441</span>, <span class="number">239.130200710676</span>,</span><br><span class="line">	<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line">cv::Mat Mml2 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">3</span>, <span class="number">3</span>) &lt;&lt;</span><br><span class="line">	<span class="number">813.005491652729</span>, <span class="number">2.01737529125153</span>, <span class="number">322.141637483107</span>,</span><br><span class="line">	<span class="number">0</span>, <span class="number">815.153838450258</span>, <span class="number">232.732313416557</span>,</span><br><span class="line">	<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//相机畸变参数，1-5行分别为K1，K2，P1，P2，K3。K是径向畸变，P是切向畸变，注意别搞错了排放顺序</span></span><br><span class="line">cv::Mat Dml1 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">5</span>, <span class="number">1</span>) &lt;&lt;</span><br><span class="line">	<span class="number">-0.598617485967720</span>,</span><br><span class="line">	<span class="number">0.473453551957653</span>,</span><br><span class="line">	<span class="number">0.00169547674384290</span>,</span><br><span class="line">	<span class="number">0.000208409890958463</span>,</span><br><span class="line">	<span class="number">-0.933829145147369</span>);</span><br><span class="line">cv::Mat Dml2 = (cv::Mat_&lt;<span class="keyword">double</span>&gt;(<span class="number">5</span>, <span class="number">1</span>) &lt;&lt;</span><br><span class="line">	<span class="number">-0.596710310550388</span>,</span><br><span class="line">	<span class="number">0.110101991305559</span>,</span><br><span class="line">	<span class="number">0.00194901593490481</span>,</span><br><span class="line">	<span class="number">0.000724389850583840</span>,</span><br><span class="line">	<span class="number">2.92541612872564</span>);</span><br><span class="line"></span><br><span class="line">cv::Mat image1,image2;</span><br><span class="line">cv::<span class="built_in">undistort</span>(<span class="keyword">this</span>-&gt;left_image, image1, Mml1, Dml1);<span class="comment">//undistort是OpenCV提供的去畸变函数</span></span><br><span class="line">cv::<span class="built_in">undistort</span>(<span class="keyword">this</span>-&gt;right_image, image2, Mml2, Dml2);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>声明存放人脸的变量，注意这里用了vector是因为OpenCV的人脸识别方法会检测出图像中所有的人脸，不一定只有一个，然后将检测到的人脸存到faces1和faces2中</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;cv::Rect&gt; faces1;<span class="comment">//存放人脸</span></span><br><span class="line">std::vector&lt;cv::Rect&gt; faces2;</span><br><span class="line">std::vector&lt; vector&lt;Point2f&gt; &gt; landmarks1;<span class="comment">//存放特征点</span></span><br><span class="line">std::vector&lt; vector&lt;Point2f&gt; &gt; landmarks2;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>-&gt;faceDetector.<span class="built_in">detectMultiScale</span>(image1, faces1);<span class="comment">//识别人脸</span></span><br><span class="line"><span class="keyword">this</span>-&gt;faceDetector.<span class="built_in">detectMultiScale</span>(image2, faces2);</span><br><span class="line"></span><br><span class="line"><span class="keyword">bool</span> success1 = <span class="keyword">this</span>-&gt;facemark-&gt;<span class="built_in">fit</span>(img1, faces1, landmarks1);<span class="comment">//在识别到人脸的基础上检测人脸特征点</span></span><br><span class="line"><span class="keyword">bool</span> success2 = <span class="keyword">this</span>-&gt;facemark-&gt;<span class="built_in">fit</span>(img2, faces2, landmarks2);</span><br></pre></td></tr></table></figure>
+
+<p>检测出特征点后就可以显示在图像上，并且计算关键点的三维坐标了（使用第一部分提到的cv::triangulatePoints函数）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (success1 &amp;&amp; success2)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//画出特征点</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> idx = <span class="number">0</span>; idx &lt; landmarks1[<span class="number">0</span>].<span class="built_in">size</span>(); idx++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">circle</span>(image1, landmarks1[<span class="number">0</span>][idx], <span class="number">2</span>, cv::<span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>),<span class="number">-1</span>);</span><br><span class="line">        <span class="built_in">circle</span>(image2, landmarks2[<span class="number">0</span>][idx], <span class="number">2</span>, cv::<span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>),<span class="number">-1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//显示图像</span></span><br><span class="line">    <span class="function">cv::Mat <span class="title">result</span><span class="params">(image1.size().height, image1.size().width * <span class="number">2</span>, image1.type())</span></span>;</span><br><span class="line">	cv::Mat part1 = <span class="built_in">result</span>(cv::<span class="built_in">Rect</span>(<span class="number">0</span>, <span class="number">0</span>, image1.<span class="built_in">size</span>().width, image1.<span class="built_in">size</span>().height));</span><br><span class="line">	cv::Mat part3 = <span class="built_in">result</span>(cv::<span class="built_in">Rect</span>(image2.<span class="built_in">size</span>().width, <span class="number">0</span>, image1.<span class="built_in">size</span>().width, image1.<span class="built_in">size</span>().height));</span><br><span class="line"></span><br><span class="line">	cv::<span class="built_in">resize</span>(img1, part1, part1.<span class="built_in">size</span>(), <span class="number">0</span>, <span class="number">0</span>, cv::INTER_AREA);</span><br><span class="line">	cv::<span class="built_in">resize</span>(img2, part2, part2.<span class="built_in">size</span>(), <span class="number">0</span>, <span class="number">0</span>, cv::INTER_AREA);</span><br><span class="line"> </span><br><span class="line">	cv::<span class="built_in">imshow</span>(<span class="string">&quot;result&quot;</span>, result);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//计算三维坐标</span></span><br><span class="line">    vector&lt;cv::Point2f&gt; pts_1, pts_2;<span class="comment">//临时保存像素坐标系点变换到相机坐标系点的变量</span></span><br><span class="line">	std::vector&lt;std::vector&lt;<span class="keyword">float</span>&gt;&gt; <span class="built_in">xyz</span>(landmarkNum, std::vector&lt;<span class="keyword">float</span>&gt;(<span class="number">3</span>, <span class="number">0.0</span>));<span class="comment">//xyz即输出的三维坐标，landmarkNum即为68</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> count = <span class="number">0</span>; count &lt; landmarkNum; count++)</span><br><span class="line">	&#123;</span><br><span class="line">		pts_1.<span class="built_in">push_back</span>(<span class="built_in">pixel2cam</span>(landmarks1[<span class="number">0</span>][count], Mml1));<span class="comment">//注意这里的pixel2cam是把点从像素坐标系转换到相机坐标系的函数</span></span><br><span class="line">		pts_2.<span class="built_in">push_back</span>(<span class="built_in">pixel2cam</span>(landmarks2[<span class="number">0</span>][count], Mml2));</span><br><span class="line">	&#125;</span><br><span class="line">	cv::Mat pts_4d = cv::<span class="built_in">Mat</span>(<span class="number">4</span>, landmarkNum, CV_32F);<span class="comment">//输出变量，函数输出的是齐次坐标，所以是4x68</span></span><br><span class="line">    </span><br><span class="line">    cv::<span class="built_in">triangulatePoints</span>(T1, T2, pts_1, pts_2, pts_4d);<span class="comment">//用最小二乘法求三维坐标</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; pts_4d.cols; i++)<span class="comment">//归一化，即将齐次坐标转换为非齐次坐标(x,y,z)</span></span><br><span class="line">	&#123;</span><br><span class="line">		cv::Mat x = pts_4d.<span class="built_in">col</span>(i);</span><br><span class="line">		x /= x.at&lt;<span class="keyword">float</span>&gt;(<span class="number">3</span>, <span class="number">0</span>); </span><br><span class="line">		<span class="function">cv::Point3d <span class="title">p</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">			x.at&lt;<span class="keyword">float</span>&gt;(<span class="number">0</span>, <span class="number">0</span>),</span></span></span><br><span class="line"><span class="function"><span class="params">			x.at&lt;<span class="keyword">float</span>&gt;(<span class="number">1</span>, <span class="number">0</span>),</span></span></span><br><span class="line"><span class="function"><span class="params">			x.at&lt;<span class="keyword">float</span>&gt;(<span class="number">2</span>, <span class="number">0</span>)</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">		)</span></span>;</span><br><span class="line">		xyz[i][<span class="number">2</span>] = p.z;</span><br><span class="line">		xyz[i][<span class="number">0</span>] = p.x;</span><br><span class="line">		xyz[i][<span class="number">1</span>] = p.y;</span><br><span class="line">		std::cout &lt;&lt; p.x &lt;&lt; <span class="string">&quot;, &quot;</span> &lt;&lt; p.y &lt;&lt; <span class="string">&quot;, &quot;</span> &lt;&lt; p.z &lt;&lt; std::endl;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//把点从像素坐标系转换到相机坐标系的函数</span></span><br><span class="line"><span class="function">cv::Point2f <span class="title">pixel2cam</span><span class="params">(<span class="keyword">const</span> cv::Point2d&amp; p, <span class="keyword">const</span> cv::Mat&amp; K)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> cv::Point2f</span><br><span class="line">	(</span><br><span class="line">		(p.x - K.at&lt;<span class="keyword">double</span>&gt;(<span class="number">0</span>, <span class="number">2</span>)) / K.at&lt;<span class="keyword">double</span>&gt;(<span class="number">0</span>, <span class="number">0</span>),</span><br><span class="line">		(p.y - K.at&lt;<span class="keyword">double</span>&gt;(<span class="number">1</span>, <span class="number">2</span>)) / K.at&lt;<span class="keyword">double</span>&gt;(<span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line">	);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>结果如下：</p>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/face1.png" alt="face"></p>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/xyz1.png" alt="xyz"></p>
+<p>如果想求某些特定的点的话，只需按照上面图片中给出的特征点序号，选择landmarks1和landmarks2里面特定的点即可。</p>
+<p>到此，基于双目立体视觉的人脸特征点三维坐标测量也就完成了。如果你也照着大概实现了一遍，你会发现存在一些问题：</p>
+<ol>
+<li>OpenCV的人脸识别会经常把图片中不是人脸的地方当做人脸= =</li>
+<li>识别出来的特征点会明显抖动，不稳定</li>
+</ol>
+<p>针对这些问题，当然存在着解决方案，敬请期待后续博文更新。</p>
 
       
     </div>
@@ -482,22 +507,6 @@
       
       
 
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2021/04/22/photo/" rel="next" title="photo">
-                <i class="fa fa-chevron-left"></i> photo
-              </a>
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-          </div>
-        </div>
       
 
       
@@ -573,9 +582,9 @@
             
               <div class="site-state-item site-state-posts">
               
-                <a href="/archives/%7C%7Carchive">
+                <a href="/archives/">
               
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">1</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -692,7 +701,7 @@
     
       <span class="post-meta-item-text">本博客总字数&#58;</span>
     
-    <span title="本博客总字数">925</span>
+    <span title="本博客总字数">2.4k</span>
   
 </div>
 
