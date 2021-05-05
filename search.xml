@@ -68,4 +68,37 @@
         <tag>人脸识别</tag>
       </tags>
   </entry>
+  <entry>
+    <title>如何提升OpenCV人脸识别方法准确率</title>
+    <url>/2021/05/05/binocular-face2/</url>
+    <content><![CDATA[<p> OpenCV自带的人脸识别方法会识别同一幅图像上所有的人脸，同时也会把并不是人脸的地方识别成人脸，这就对使用者带来不便。那么如何优化这个方法，使其能够正常有效地运行呢？</p>
+<span id="more"></span>
+
+<h1 id="OpenCV人脸识别的不准问题"><a href="#OpenCV人脸识别的不准问题" class="headerlink" title="OpenCV人脸识别的不准问题"></a>OpenCV人脸识别的不准问题</h1><p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/wrong_face.png" alt="wrong_face"></p>
+<p>上图就是直接使用OpenCV人脸识别方法经常会发生的情况了。对于我目前的使用场景，我只想要图片中识别出唯一正确的人脸。所以我使用了如下两种改进方法：设置ROI和人脸排序。</p>
+<h1 id="设置ROI"><a href="#设置ROI" class="headerlink" title="设置ROI"></a>设置ROI</h1><p>ROI（region of interest）就是感兴趣区域，在此处具体来讲就是人脸比较容易出现的区域。由于我目前使用的是双目相机，根据双目相机的成像规律，人脸通常会出现在左相机的右侧，以及右相机的左侧，具体可以看下图</p>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/stereo1.jpg" alt="stereo1"></p>
+<p>从图中可以看出，人脸的图像总是会在左相机的右边，在右相机的左边，因此我把这两个区域设置为ROI，让OpenCV的人脸识别只识别ROI区域，这样非ROI区域就不会被识别了。</p>
+<p>具体设置如下：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">cv::Rect <span class="title">RectROI1</span><span class="params">(<span class="number">300</span>, <span class="number">100</span>, <span class="number">340</span>, <span class="number">300</span>)</span></span>;  <span class="comment">//把ROI画出来,括号内分别是图像的x,y,width,height，注意x轴是从左往右为正，y轴是从上往下为正</span></span><br><span class="line"><span class="function">cv::Rect <span class="title">RectROI2</span><span class="params">(<span class="number">0</span>, <span class="number">100</span>, <span class="number">340</span>, <span class="number">300</span>)</span></span>;</span><br><span class="line">cv::<span class="built_in">rectangle</span>(image1, RectROI1, <span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>), <span class="number">1</span>); 	</span><br><span class="line">cv::<span class="built_in">rectangle</span>(image2, RectROI2, <span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>), <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">cv::Mat imageROI1 = <span class="built_in">image1</span>(<span class="built_in">Range</span>(<span class="number">100</span>, <span class="number">340</span>), <span class="built_in">Range</span>(<span class="number">300</span>, <span class="number">640</span>)); <span class="comment">//正式设置每幅图像的ROI，四个参数分别是上下左右</span></span><br><span class="line">cv::Mat imageROI2 = <span class="built_in">image2</span>(<span class="built_in">Range</span>(<span class="number">100</span>, <span class="number">340</span>), <span class="built_in">Range</span>(<span class="number">0</span>, <span class="number">340</span>));</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>-&gt;faceDetector.<span class="built_in">detectMultiScale</span>(imageROI1, faces1);<span class="comment">//这里再修改一下输入参数，不是原图像，而是ROI</span></span><br><span class="line"><span class="keyword">this</span>-&gt;faceDetector.<span class="built_in">detectMultiScale</span>(imageROI2, faces2);</span><br><span class="line"></span><br><span class="line">faces1[<span class="number">0</span>] = faces1[<span class="number">0</span>] + <span class="built_in">Point</span>(<span class="number">300</span>, <span class="number">100</span>); <span class="comment">//识别出来的人脸的坐标是在ROI区域内的，需要转换到原图像中</span></span><br><span class="line">faces2[<span class="number">0</span>] = faces2[<span class="number">0</span>] + <span class="built_in">Point</span>(<span class="number">0</span>, <span class="number">100</span>);</span><br><span class="line">	</span><br><span class="line"><span class="comment">//其他步骤和前文就一致了</span></span><br></pre></td></tr></table></figure>
+
+<p>结果如下图：</p>
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/ROI1.jpg" alt="ROI"></p>
+<p>可以看到，设置ROI之后，人脸检测的范围就被缩小到大的绿色框内了，识别成功的概率有提升。如果在你的应用场景中，人脸也是会通常出现在特定区域，那么你也可以利用这个方法试一试。</p>
+<p>等等，右边图像的背景墙上有一部分还是被当做人脸，如何解决这个问题？</p>
+<h1 id="人脸排序"><a href="#人脸排序" class="headerlink" title="人脸排序"></a>人脸排序</h1><p>通过大量测试发现，OpenCV误把非人脸区域识别成人脸的情况下，错误人脸bounding-box是明显小于真正人脸bounding-box的，因此可以把识别到的所有“人脸”降序排列，第一个就是真正的人脸啦。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//降序排列</span></span><br><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">comparison</span><span class="params">(cv::Rect a, cv::Rect b)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> a.width &gt; b.width;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">std::<span class="built_in">sort</span>(faces1.<span class="built_in">begin</span>(), faces1.<span class="built_in">end</span>(), comparison);</span><br><span class="line">std::<span class="built_in">sort</span>(faces2.<span class="built_in">begin</span>(), faces2.<span class="built_in">end</span>(), comparison);</span><br><span class="line"></span><br><span class="line"><span class="comment">//第一个人脸用绿框，其余用红框</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; faces1.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">    <span class="keyword">if</span> (i == <span class="number">0</span>)</span><br><span class="line">        cv::<span class="built_in">rectangle</span>(img1, faces1[i], cv::<span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>));</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        cv::<span class="built_in">rectangle</span>(img1, faces1[i], cv::<span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; faces2.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">    <span class="keyword">if</span> (i == <span class="number">0</span>)</span><br><span class="line">        cv::<span class="built_in">rectangle</span>(img2, faces2[i], cv::<span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>));</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        cv::<span class="built_in">rectangle</span>(img2, faces2[i], cv::<span class="built_in">Scalar</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">255</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="http://langjxblog.oss-cn-beijing.aliyuncs.com/img/sort.png" alt="sort"></p>
+<p>结果如图，这样就能确保得到真正的人脸了。这些框框只是为了讲明白是怎么一回事画的，实际上我的工程里面没有画这些红的绿的框，只标出了人脸特征点，需不需要画自己决定。</p>
+<p>经过设置ROI和人脸排序两个步骤，OpenCV的人脸识别方法已经有很大的改良了，能够投入正常使用中。除此之外有没有其他比较方便的实现人脸识别的办法呢？你好，有的。那就是Dlib，下一篇文章就介绍如何在OpenCV里面使用Dlib进行人脸识别吧。</p>
+]]></content>
+      <categories>
+        <category>计算机视觉</category>
+      </categories>
+      <tags>
+        <tag>计算机视觉</tag>
+        <tag>人脸识别</tag>
+      </tags>
+  </entry>
 </search>
